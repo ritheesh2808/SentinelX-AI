@@ -25,6 +25,8 @@ enum AssetStatus {
   ACTIVE
   INACTIVE
   ARCHIVED
+  ONLINE
+  OFFLINE
 }
 
 enum ScanStatus {
@@ -91,24 +93,27 @@ model User {
 }
 
 model Asset {
-  id          String      @id @default(uuid()) @db.Uuid
-  ownerId     String      @db.Uuid
-  name        String
-  type        AssetType
-  status      AssetStatus @default(ACTIVE)
-  description String?
-  identifier  String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id              String      @id @default(uuid()) @db.Uuid
+  hostname        String
+  ipAddress       String
+  operatingSystem String?
+  assetType       AssetType
+  ownerId         String      @db.Uuid
+  criticality     Severity    @default(MEDIUM)
+  environment     String      @default("Production")
+  status          AssetStatus @default(ONLINE)
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   owner     User       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   scans     Scan[]
   hosts     Host[]
   incidents Incident[]
 
-  @@unique([ownerId, identifier])
+  @@unique([hostname, ipAddress])
   @@index([ownerId])
-  @@index([type])
+  @@index([assetType])
   @@index([status])
   @@map("assets")
 }

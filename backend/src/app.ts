@@ -3,6 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
 import authRoutes from './auth/routes/auth.routes'
+import assetRoutes from './assets/routes/asset.routes'
 
 dotenv.config()
 
@@ -13,6 +14,7 @@ app.use(cors())
 app.use(helmet())
 
 app.use('/auth', authRoutes)
+app.use('/assets', assetRoutes)
 
 app.get('/', (_req, res) => {
   res.json({

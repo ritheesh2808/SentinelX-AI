@@ -5,6 +5,7 @@ import ProtectedRoute from '../components/layout/ProtectedRoute';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LoginPage from '../pages/auth/LoginPage';
 import DashboardHome from '../pages/dashboard/DashboardHome';
+import AssetsPage from '../pages/dashboard/AssetsPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 // A component that handles redirecting the root path '/' based on authentication state
@@ -44,6 +45,7 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<DashboardHome />} />
+        <Route path="assets" element={<AssetsPage />} />
       </Route>
 
       {/* 404 Catch All */}
