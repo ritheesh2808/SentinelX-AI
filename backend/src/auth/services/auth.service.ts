@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import prisma from '../../config/prisma';
+import * as userRepository from '../repositories/user.repository';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
 
 const getJwtSecret = (): string => {
@@ -47,20 +47,14 @@ export const register = async (dto: RegisterDto): Promise<void> => {
     throw { status: 400, message: 'Missing required fields' };
   }
 
-  const existingUser = await prisma.user.findUnique({ where: { email: dto.email } });
+  const existingUser = await userRepository.findByEmail(dto.email);
   if (existingUser) {
     throw { status: 409, message: 'Email already exists' };
   }
 
   const hashedPassword = await hashPassword(dto.password);
 
-  await prisma.user.create({
-    data: {
-      name: dto.fullName,
-      email: dto.email,
-      password: hashedPassword,
-    },
-  });
+  await userRepository.createUser(dto.fullName, dto.email, hashedPassword);
 };
 
 export const login = async (dto: LoginDto): Promise<{ token: string; user: any }> => {
@@ -68,7 +62,7 @@ export const login = async (dto: LoginDto): Promise<{ token: string; user: any }
     throw { status: 400, message: 'Missing required fields' };
   }
 
-  const user = await prisma.user.findUnique({ where: { email: dto.email } });
+  const user = await userRepository.findByEmail(dto.email);
   if (!user) {
     throw { status: 401, message: 'Invalid email or password' };
   }
@@ -91,7 +85,7 @@ export const login = async (dto: LoginDto): Promise<{ token: string; user: any }
 };
 
 export const profile = async (userId: string): Promise<any> => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await userRepository.findById(userId);
   if (!user) {
     throw { status: 404, message: 'User not found' };
   }

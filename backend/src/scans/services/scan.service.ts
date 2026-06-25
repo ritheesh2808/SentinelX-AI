@@ -1,6 +1,6 @@
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import * as repository from '../repositories/scan.repository';
-import prisma from '../../config/prisma';
+import * as assetRepository from '../../assets/repositories/asset.repository';
 import { Scan, ScanHost, ScanStatus } from '@prisma/client';
 
 export const importScan = async (
@@ -128,12 +128,7 @@ export const importScan = async (
     let operatingSystem = osmatches.length > 0 ? osmatches[0].name : undefined;
 
     // 6. Perform Asset Correlation: Match IP under the User's assets
-    const matchedAsset = await prisma.asset.findFirst({
-      where: {
-        ipAddress: ipAddress,
-        ownerId: importedById,
-      },
-    });
+    const matchedAsset = await assetRepository.findByIpAddress(ipAddress, importedById);
 
     parsedHosts.push({
       hostname,

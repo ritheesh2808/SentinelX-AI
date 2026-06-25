@@ -126,3 +126,12 @@ export const getStats = async (ownerId: string): Promise<{ total: number; online
 
   return { total, online, offline, critical };
 };
+
+export const findByIpAddress = async (ipAddress: string, ownerId: string): Promise<Asset | null> => {
+  return await prisma.asset.findFirst({
+    where: {
+      ipAddress,
+      ownerId,
+    },
+  });
+};
