@@ -1,1 +1,0 @@
-$(grep -A 50 "SPRINT-05" /home/ritheesh/.gemini/antigravity-ide/brain/cf63a0f8-2c59-4629-9822-059875d24bbf/.system_generated/logs/transcript.jsonl)
