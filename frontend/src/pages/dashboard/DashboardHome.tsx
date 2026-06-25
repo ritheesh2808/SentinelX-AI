@@ -3,9 +3,11 @@ import { useAuth } from '../../hooks/useAuth';
 import * as assetService from '../../services/assetService';
 import * as scanService from '../../services/scanService';
 import * as portService from '../../services/portService';
+import * as vulnerabilityService from '../../services/vulnerabilityService';
 import type { AssetStats } from '../../types/asset';
 import type { ScanStats } from '../../types/scan';
 import type { PortStats } from '../../types/port';
+import type { VulnerabilityStats } from '../../types/vulnerability';
 
 export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
@@ -13,19 +15,22 @@ export const DashboardHome: React.FC = () => {
   const [assetStats, setAssetStats] = useState<AssetStats | null>(null);
   const [scanStats, setScanStats] = useState<ScanStats | null>(null);
   const [portStats, setPortStats] = useState<PortStats | null>(null);
+  const [vulnStats, setVulnStats] = useState<VulnerabilityStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [assetsData, scansData, portsData] = await Promise.all([
+        const [assetsData, scansData, portsData, vulnsData] = await Promise.all([
           assetService.getAssetStats(),
           scanService.getScanStats(),
           portService.getPortStats(),
+          vulnerabilityService.getVulnerabilityStats(),
         ]);
         setAssetStats(assetsData);
         setScanStats(scansData);
         setPortStats(portsData);
+        setVulnStats(vulnsData);
       } catch (error) {
         console.error('Failed to retrieve dashboard stats:', error);
       } finally {
@@ -368,6 +373,110 @@ export const DashboardHome: React.FC = () => {
                           className="h-full bg-[#6366f1] rounded-full"
                           style={{ width: `${pct}%` }}
                         ></div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Vulnerability Intelligence Section */}
+      <div>
+        <h3 className="text-xs font-bold text-[#475569] uppercase tracking-widest mb-4">
+          Vulnerability Intelligence Overview
+        </h3>
+
+        {/* Vuln Widget Row */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-8">
+          <div className="rounded-xl border border-[#475569]/20 bg-[#475569]/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">Total</div>
+            <div className="text-2xl font-bold text-[#f8fafc]">{isLoading ? '...' : vulnStats?.total ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">Critical</div>
+            <div className="text-2xl font-bold text-red-400">{isLoading ? '...' : vulnStats?.criticalCount ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">High</div>
+            <div className="text-2xl font-bold text-orange-400">{isLoading ? '...' : vulnStats?.highCount ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">Open</div>
+            <div className="text-2xl font-bold text-blue-400">{isLoading ? '...' : vulnStats?.openCount ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">Mitigated</div>
+            <div className="text-2xl font-bold text-emerald-400">{isLoading ? '...' : vulnStats?.mitigatedCount ?? 0}</div>
+          </div>
+        </div>
+
+        {/* Vuln Charts Row */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* By Severity */}
+          <div className="bg-[#131c2e] border border-[#1e293b] rounded-2xl p-6 shadow-xl space-y-4">
+            <h4 className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider border-b border-[#1e293b] pb-2">
+              Vulnerabilities by Severity
+            </h4>
+            <div className="space-y-3">
+              {isLoading ? (
+                <div className="text-xs text-[#475569]">Loading severity breakdown...</div>
+              ) : !vulnStats?.bySeverity || vulnStats.bySeverity.length === 0 ? (
+                <div className="text-xs text-[#475569] italic">No vulnerabilities indexed.</div>
+              ) : (
+                vulnStats.bySeverity.map((s) => {
+                  const totalCount = vulnStats.bySeverity.reduce((a, b) => a + b.count, 0) || 1;
+                  const pct = Math.round((s.count / totalCount) * 100);
+                  const color =
+                    s.severity === 'CRITICAL' ? 'bg-red-500' :
+                    s.severity === 'HIGH' ? 'bg-orange-500' :
+                    s.severity === 'MEDIUM' ? 'bg-amber-500' :
+                    s.severity === 'LOW' ? 'bg-blue-500' : 'bg-emerald-500';
+                  return (
+                    <div key={s.severity}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-semibold text-[#f8fafc]">{s.severity}</span>
+                        <span>{s.count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-[#0b0f19] rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* By Status */}
+          <div className="bg-[#131c2e] border border-[#1e293b] rounded-2xl p-6 shadow-xl space-y-4">
+            <h4 className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider border-b border-[#1e293b] pb-2">
+              Vulnerabilities by Status
+            </h4>
+            <div className="space-y-3">
+              {isLoading ? (
+                <div className="text-xs text-[#475569]">Loading status breakdown...</div>
+              ) : !vulnStats?.byStatus || vulnStats.byStatus.length === 0 ? (
+                <div className="text-xs text-[#475569] italic">No status data available.</div>
+              ) : (
+                vulnStats.byStatus.map((s) => {
+                  const totalCount = vulnStats.byStatus.reduce((a, b) => a + b.count, 0) || 1;
+                  const pct = Math.round((s.count / totalCount) * 100);
+                  const color =
+                    s.status === 'OPEN' ? 'bg-red-500' :
+                    s.status === 'CONFIRMED' ? 'bg-orange-500' :
+                    s.status === 'MITIGATED' ? 'bg-emerald-500' :
+                    s.status === 'FALSE_POSITIVE' ? 'bg-slate-500' : 'bg-purple-500';
+                  return (
+                    <div key={s.status}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-semibold text-[#f8fafc]">{s.status.replace(/_/g, ' ')}</span>
+                        <span>{s.count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-[#0b0f19] rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }}></div>
                       </div>
                     </div>
                   );

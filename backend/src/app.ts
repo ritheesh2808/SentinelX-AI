@@ -6,6 +6,7 @@ import authRoutes from './auth/routes/auth.routes'
 import assetRoutes from './assets/routes/asset.routes'
 import scanRoutes from './scans/routes/scan.routes'
 import portRoutes from './ports/routes/port.routes'
+import vulnerabilityRoutes from './vulnerabilities/routes/vulnerability.routes'
 
 dotenv.config()
 
@@ -19,6 +20,7 @@ app.use('/auth', authRoutes)
 app.use('/assets', assetRoutes)
 app.use('/scans', scanRoutes)
 app.use('/ports', portRoutes)
+app.use('/vulnerabilities', vulnerabilityRoutes)
 
 app.get('/', (_req, res) => {
   res.json({
