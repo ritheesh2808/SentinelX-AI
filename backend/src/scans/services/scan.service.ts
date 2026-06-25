@@ -1,6 +1,7 @@
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import * as repository from '../repositories/scan.repository';
 import * as assetRepository from '../../assets/repositories/asset.repository';
+import { getRiskLevel } from '../../ports/services/risk.service';
 import { Scan, ScanHost, ScanStatus } from '@prisma/client';
 
 export const importScan = async (
@@ -76,6 +77,16 @@ export const importScan = async (
     state: string;
     operatingSystem?: string;
     assetId?: string;
+    ports?: Array<{
+      portNumber: number;
+      protocol: string;
+      state: string;
+      service: string;
+      product?: string;
+      version?: string;
+      banner?: string;
+      riskLevel: string;
+    }>;
   }> = [];
 
   for (const host of rawHosts) {
@@ -130,6 +141,58 @@ export const importScan = async (
     // 6. Perform Asset Correlation: Match IP under the User's assets
     const matchedAsset = await assetRepository.findByIpAddress(ipAddress, importedById);
 
+    // 7. Extract Ports & Services
+    const portsElement = host.ports?.port;
+    const rawPorts = Array.isArray(portsElement)
+      ? portsElement
+      : portsElement
+      ? [portsElement]
+      : [];
+
+    const hostPorts: Array<{
+      portNumber: number;
+      protocol: string;
+      state: string;
+      service: string;
+      product?: string;
+      version?: string;
+      banner?: string;
+      riskLevel: string;
+    }> = [];
+
+    for (const p of rawPorts) {
+      const portNumber = parseInt(p.portid, 10);
+      if (isNaN(portNumber)) continue;
+
+      const protocol = p.protocol || 'tcp';
+      const portState = p.state?.state || 'unknown';
+      const serviceName = p.service?.name || 'unknown';
+      const product = p.service?.product || undefined;
+      const version = p.service?.version || undefined;
+
+      // Extract banner script output if available
+      const scripts = Array.isArray(p.script)
+        ? p.script
+        : p.script
+        ? [p.script]
+        : [];
+      const bannerScript = scripts.find((s: any) => s.id === 'banner');
+      const banner = bannerScript ? bannerScript.output || undefined : undefined;
+
+      const riskLevel = getRiskLevel(portNumber, serviceName);
+
+      hostPorts.push({
+        portNumber,
+        protocol,
+        state: portState,
+        service: serviceName,
+        product,
+        version,
+        banner,
+        riskLevel,
+      });
+    }
+
     parsedHosts.push({
       hostname,
       ipAddress,
@@ -138,6 +201,7 @@ export const importScan = async (
       state,
       operatingSystem,
       assetId: matchedAsset?.id,
+      ports: hostPorts,
     });
   }
 

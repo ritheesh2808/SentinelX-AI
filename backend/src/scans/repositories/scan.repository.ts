@@ -19,6 +19,16 @@ export const createScanWithHosts = async (
     state: string;
     operatingSystem?: string;
     assetId?: string;
+    ports?: Array<{
+      portNumber: number;
+      protocol: string;
+      state: string;
+      service: string;
+      product?: string;
+      version?: string;
+      banner?: string;
+      riskLevel: string;
+    }>;
   }>
 ): Promise<Scan> => {
   return await prisma.$transaction(async (tx) => {
@@ -35,10 +45,10 @@ export const createScanWithHosts = async (
       },
     });
 
-    // 2. Create the associated ScanHost records
-    if (hostsData.length > 0) {
-      await tx.scanHost.createMany({
-        data: hostsData.map((h) => ({
+    // 2. Create the associated ScanHost records and nested ports
+    for (const h of hostsData) {
+      const createdHost = await tx.scanHost.create({
+        data: {
           scanId: scan.id,
           hostname: h.hostname || null,
           ipAddress: h.ipAddress,
@@ -47,8 +57,24 @@ export const createScanWithHosts = async (
           state: h.state,
           operatingSystem: h.operatingSystem || null,
           assetId: h.assetId || null,
-        })),
+        },
       });
+
+      if (h.ports && h.ports.length > 0) {
+        await tx.port.createMany({
+          data: h.ports.map((p) => ({
+            scanHostId: createdHost.id,
+            portNumber: p.portNumber,
+            protocol: p.protocol,
+            state: p.state,
+            service: p.service,
+            product: p.product || null,
+            version: p.version || null,
+            banner: p.banner || null,
+            riskLevel: p.riskLevel,
+          })),
+        });
+      }
     }
 
     return scan;

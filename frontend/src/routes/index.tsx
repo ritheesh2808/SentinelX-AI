@@ -9,6 +9,9 @@ import AssetsPage from '../pages/dashboard/AssetsPage';
 import ScansListPage from '../pages/dashboard/ScansListPage';
 import ScanImportPage from '../pages/dashboard/ScanImportPage';
 import ScanDetailsPage from '../pages/dashboard/ScanDetailsPage';
+import PortsPage from '../pages/dashboard/PortsPage';
+import PortDetailsPage from '../pages/dashboard/PortDetailsPage';
+import AssetPortsPage from '../pages/dashboard/AssetPortsPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 // A component that handles redirecting the root path '/' based on authentication state
@@ -52,6 +55,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="scans" element={<ScansListPage />} />
         <Route path="scans/import" element={<ScanImportPage />} />
         <Route path="scans/:id" element={<ScanDetailsPage />} />
+        <Route path="ports" element={<PortsPage />} />
+        <Route path="ports/:id" element={<PortDetailsPage />} />
+        <Route path="assets/:id/ports" element={<AssetPortsPage />} />
       </Route>
 
       {/* 404 Catch All */}

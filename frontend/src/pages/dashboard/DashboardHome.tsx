@@ -2,25 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import * as assetService from '../../services/assetService';
 import * as scanService from '../../services/scanService';
+import * as portService from '../../services/portService';
 import type { AssetStats } from '../../types/asset';
 import type { ScanStats } from '../../types/scan';
+import type { PortStats } from '../../types/port';
 
 export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
   
   const [assetStats, setAssetStats] = useState<AssetStats | null>(null);
   const [scanStats, setScanStats] = useState<ScanStats | null>(null);
+  const [portStats, setPortStats] = useState<PortStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [assetsData, scansData] = await Promise.all([
+        const [assetsData, scansData, portsData] = await Promise.all([
           assetService.getAssetStats(),
           scanService.getScanStats(),
+          portService.getPortStats(),
         ]);
         setAssetStats(assetsData);
         setScanStats(scansData);
+        setPortStats(portsData);
       } catch (error) {
         console.error('Failed to retrieve dashboard stats:', error);
       } finally {
@@ -231,6 +236,145 @@ export const DashboardHome: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Ports Stats & Widgets Section */}
+      <div>
+        <h3 className="text-xs font-bold text-[#475569] uppercase tracking-widest mb-4">
+          Port & Service Intelligence Overview
+        </h3>
+        
+        {/* Row of widgets */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-8">
+          <div className="rounded-xl border border-[#6366f1]/20 bg-[#6366f1]/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">Open Ports</div>
+            <div className="text-2xl font-bold text-[#f8fafc]">{isLoading ? '...' : portStats?.openPorts ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">Critical Ports</div>
+            <div className="text-2xl font-bold text-red-400">{isLoading ? '...' : portStats?.criticalPorts ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">HTTP Services</div>
+            <div className="text-2xl font-bold text-amber-400">{isLoading ? '...' : portStats?.httpServices ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">HTTPS Services</div>
+            <div className="text-2xl font-bold text-emerald-400">{isLoading ? '...' : portStats?.httpsServices ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-5">
+            <div className="text-xs font-medium uppercase tracking-wider text-[#94a3b8] mb-1">SSH Services</div>
+            <div className="text-2xl font-bold text-blue-400">{isLoading ? '...' : portStats?.sshServices ?? 0}</div>
+          </div>
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
+          {/* Ports by Protocol Chart */}
+          <div className="bg-[#131c2e] border border-[#1e293b] rounded-2xl p-6 shadow-xl space-y-4">
+            <h4 className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider border-b border-[#1e293b] pb-2">
+              Ports by Protocol
+            </h4>
+            <div className="space-y-3">
+              {isLoading ? (
+                <div className="text-xs text-[#475569]">Loading protocol insights...</div>
+              ) : !portStats?.portsByProtocol || portStats.portsByProtocol.length === 0 ? (
+                <div className="text-xs text-[#475569] italic">No protocols discovered.</div>
+              ) : (
+                portStats.portsByProtocol.map((p) => {
+                  const totalCount = portStats.portsByProtocol.reduce((a, b) => a + b.count, 0) || 1;
+                  const pct = Math.round((p.count / totalCount) * 100);
+                  return (
+                    <div key={p.protocol}>
+                      <div className="flex justify-between text-xs mb-1 font-mono">
+                        <span className="font-semibold text-[#f8fafc]">{p.protocol.toUpperCase()}</span>
+                        <span>{p.count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-[#0b0f19] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#6366f1] to-[#a855f7] rounded-full"
+                          style={{ width: `${pct}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Ports by Risk Chart */}
+          <div className="bg-[#131c2e] border border-[#1e293b] rounded-2xl p-6 shadow-xl space-y-4">
+            <h4 className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider border-b border-[#1e293b] pb-2">
+              Ports by Risk Level
+            </h4>
+            <div className="space-y-3">
+              {isLoading ? (
+                <div className="text-xs text-[#475569]">Loading risk classification...</div>
+              ) : !portStats?.portsByRisk || portStats.portsByRisk.length === 0 ? (
+                <div className="text-xs text-[#475569] italic">No risk insights indexed.</div>
+              ) : (
+                portStats.portsByRisk.map((r) => {
+                  const totalCount = portStats.portsByRisk.reduce((a, b) => a + b.count, 0) || 1;
+                  const pct = Math.round((r.count / totalCount) * 100);
+                  return (
+                    <div key={r.riskLevel}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-semibold text-[#f8fafc]">{r.riskLevel}</span>
+                        <span>{r.count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 w-full bg-[#0b0f19] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            r.riskLevel.toLowerCase() === 'critical' ? 'bg-red-500' :
+                            r.riskLevel.toLowerCase() === 'high' ? 'bg-orange-500' :
+                            r.riskLevel.toLowerCase() === 'medium' ? 'bg-amber-500' :
+                            r.riskLevel.toLowerCase() === 'low' ? 'bg-blue-500' :
+                            r.riskLevel.toLowerCase() === 'informational' ? 'bg-emerald-500' : 'bg-slate-500'
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Most Common Services */}
+          <div className="bg-[#131c2e] border border-[#1e293b] rounded-2xl p-6 shadow-xl space-y-4">
+            <h4 className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider border-b border-[#1e293b] pb-2">
+              Most Common Services
+            </h4>
+            <div className="space-y-3">
+              {isLoading ? (
+                <div className="text-xs text-[#475569]">Loading service statistics...</div>
+              ) : !portStats?.topServices || portStats.topServices.length === 0 ? (
+                <div className="text-xs text-[#475569] italic">No services discovered.</div>
+              ) : (
+                portStats.topServices.slice(0, 5).map((s) => {
+                  const totalCount = portStats.topServices.reduce((a, b) => a + b.count, 0) || 1;
+                  const pct = Math.round((s.count / totalCount) * 100);
+                  return (
+                    <div key={s.service}>
+                      <div className="flex justify-between text-xs mb-1 font-mono">
+                        <span className="font-semibold text-[#f8fafc]">{s.service}</span>
+                        <span>{s.count}</span>
+                      </div>
+                      <div className="h-2 w-full bg-[#0b0f19] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#6366f1] rounded-full"
+                          style={{ width: `${pct}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

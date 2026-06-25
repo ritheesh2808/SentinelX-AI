@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as controller from '../controllers/asset.controller';
+import { getPortsForAsset } from '../../ports/controllers/port.controller';
 import { authenticate } from '../../auth/middleware/auth.middleware';
 
 const router = Router();
@@ -14,6 +15,7 @@ router.get('/stats', controller.getStats);
 router.post('/', controller.createAsset);
 router.get('/', controller.getAllAssets);
 router.get('/:id', controller.getAssetById);
+router.get('/:id/ports', getPortsForAsset);
 router.put('/:id', controller.updateAsset);
 router.delete('/:id', controller.deleteAsset);
 
