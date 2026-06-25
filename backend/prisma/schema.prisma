@@ -86,6 +86,7 @@ model User {
   assets    Asset[]
   incidents Incident[]
   auditLogs AuditLog[]
+  scans     Scan[]
 
   @@index([role])
   @@index([isActive])
@@ -107,9 +108,9 @@ model Asset {
   updatedAt       DateTime    @updatedAt
 
   owner     User       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  scans     Scan[]
   hosts     Host[]
   incidents Incident[]
+  scanHosts ScanHost[]
 
   @@unique([hostname, ipAddress])
   @@index([ownerId])
@@ -119,22 +120,45 @@ model Asset {
 }
 
 model Scan {
-  id          String     @id @default(uuid()) @db.Uuid
-  assetId     String     @db.Uuid
-  status      ScanStatus @default(QUEUED)
-  startedAt   DateTime?
-  completedAt DateTime?
-  errorMessage String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id            String     @id @default(uuid()) @db.Uuid
+  filename      String
+  importedById  String     @db.Uuid
+  importedAt    DateTime   @default(now())
+  scanner       String
+  scanArguments String?
+  startTime     DateTime?
+  endTime       DateTime?
+  status        ScanStatus @default(COMPLETED)
 
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  hosts Host[]
+  importedBy    User       @relation(fields: [importedById], references: [id], onDelete: Restrict)
+  scanHosts     ScanHost[]
+  hosts         Host[]
 
-  @@index([assetId])
+  @@index([importedById])
   @@index([status])
-  @@index([startedAt])
   @@map("scans")
+}
+
+model ScanHost {
+  id              String   @id @default(uuid()) @db.Uuid
+  scanId          String   @db.Uuid
+  assetId         String?  @db.Uuid
+  hostname        String?
+  ipAddress       String
+  macAddress      String?
+  vendor          String?
+  state           String
+  operatingSystem String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  scan            Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  asset           Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
+  @@index([scanId])
+  @@index([assetId])
+  @@index([ipAddress])
+  @@map("scan_hosts")
 }
 
 model Host {

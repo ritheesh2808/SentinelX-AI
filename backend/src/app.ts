@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import dotenv from 'dotenv'
 import authRoutes from './auth/routes/auth.routes'
 import assetRoutes from './assets/routes/asset.routes'
+import scanRoutes from './scans/routes/scan.routes'
 
 dotenv.config()
 
@@ -15,6 +16,7 @@ app.use(helmet())
 
 app.use('/auth', authRoutes)
 app.use('/assets', assetRoutes)
+app.use('/scans', scanRoutes)
 
 app.get('/', (_req, res) => {
   res.json({

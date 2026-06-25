@@ -1,31 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import * as assetService from '../../services/assetService';
+import * as scanService from '../../services/scanService';
 import type { AssetStats } from '../../types/asset';
+import type { ScanStats } from '../../types/scan';
 
 export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState<AssetStats | null>(null);
+  
+  const [assetStats, setAssetStats] = useState<AssetStats | null>(null);
+  const [scanStats, setScanStats] = useState<ScanStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const data = await assetService.getAssetStats();
-        setStats(data);
+        const [assetsData, scansData] = await Promise.all([
+          assetService.getAssetStats(),
+          scanService.getScanStats(),
+        ]);
+        setAssetStats(assetsData);
+        setScanStats(scansData);
       } catch (error) {
-        console.error('Failed to retrieve dashboard statistics:', error);
+        console.error('Failed to retrieve dashboard stats:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchStats();
+    
+    fetchDashboardData();
   }, []);
 
-  const statCards = [
+  const assetCards = [
     {
       title: 'Total Assets',
-      value: isLoading ? '...' : stats?.total ?? 0,
+      value: isLoading ? '...' : assetStats?.total ?? 0,
       color: 'text-[#6366f1] border-[#6366f1]/20 bg-[#6366f1]/5',
       trend: 'Registered nodes',
       icon: (
@@ -36,7 +45,7 @@ export const DashboardHome: React.FC = () => {
     },
     {
       title: 'Online Assets',
-      value: isLoading ? '...' : stats?.online ?? 0,
+      value: isLoading ? '...' : assetStats?.online ?? 0,
       color: 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5',
       trend: 'Reporting active status',
       icon: (
@@ -47,7 +56,7 @@ export const DashboardHome: React.FC = () => {
     },
     {
       title: 'Offline Assets',
-      value: isLoading ? '...' : stats?.offline ?? 0,
+      value: isLoading ? '...' : assetStats?.offline ?? 0,
       color: 'text-amber-500 border-amber-500/20 bg-amber-500/5',
       trend: 'Reporting inactive status',
       icon: (
@@ -58,12 +67,59 @@ export const DashboardHome: React.FC = () => {
     },
     {
       title: 'Critical Assets',
-      value: isLoading ? '...' : stats?.critical ?? 0,
+      value: isLoading ? '...' : assetStats?.critical ?? 0,
       color: 'text-red-500 border-red-500/20 bg-red-500/5',
       trend: 'Priority security scope',
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const scanCards = [
+    {
+      title: 'Total Scans',
+      value: isLoading ? '...' : scanStats?.totalScans ?? 0,
+      color: 'text-[#6366f1] border-[#6366f1]/20 bg-[#6366f1]/5',
+      trend: 'Scan logs indexed',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Imported Today',
+      value: isLoading ? '...' : scanStats?.importedToday ?? 0,
+      color: 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5',
+      trend: 'Last 24 hours',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Hosts Discovered',
+      value: isLoading ? '...' : scanStats?.hostsDiscovered ?? 0,
+      color: 'text-[#a855f7] border-[#a855f7]/20 bg-[#a855f7]/5',
+      trend: 'Identified scan targets',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Linked Assets',
+      value: isLoading ? '...' : scanStats?.linkedAssets ?? 0,
+      color: 'text-rose-500 border-rose-500/20 bg-rose-500/5',
+      trend: 'Correlated to inventory',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
         </svg>
       ),
     },
@@ -122,13 +178,41 @@ export const DashboardHome: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Cards Section */}
+      {/* Asset Stats Cards Section */}
       <div>
         <h3 className="text-xs font-bold text-[#475569] uppercase tracking-widest mb-4">
-          Control Center Statistics
+          Asset Management Overview
         </h3>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {statCards.map((stat) => (
+          {assetCards.map((stat) => (
+            <div
+              key={stat.title}
+              className={`rounded-xl border p-5 transition-all hover:scale-[1.01] ${stat.color}`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium uppercase tracking-wider text-[#94a3b8]">
+                  {stat.title}
+                </span>
+                <span className="opacity-80">{stat.icon}</span>
+              </div>
+              <div className="text-2xl font-bold tracking-tight text-[#f8fafc]">
+                {stat.value}
+              </div>
+              <div className="mt-2 text-xs text-[#94a3b8]">
+                {stat.trend}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Scan Stats Cards Section */}
+      <div>
+        <h3 className="text-xs font-bold text-[#475569] uppercase tracking-widest mb-4">
+          Scan Auditing Overview
+        </h3>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {scanCards.map((stat) => (
             <div
               key={stat.title}
               className={`rounded-xl border p-5 transition-all hover:scale-[1.01] ${stat.color}`}
@@ -236,7 +320,7 @@ export const DashboardHome: React.FC = () => {
 
           <div className="border-t border-[#1e293b] pt-4 text-xs text-[#475569] space-y-2">
             <div>
-              Platform Build ID: <span className="text-[#94a3b8] font-mono">v1.0.0-sprint-07</span>
+              Platform Build ID: <span className="text-[#94a3b8] font-mono">v1.0.0-sprint-08</span>
             </div>
             <div>
               Database Health: <span className="text-emerald-500 font-bold">CONNECTED</span>
