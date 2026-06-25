@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../services/auth.service';
-import { JwtPayload } from 'jsonwebtoken';
 
 export interface AuthenticatedRequest extends Request {
-  user?: string | JwtPayload;
+  user?: { id: string; [key: string]: any };
 }
 
 export const authenticate = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
@@ -17,12 +16,13 @@ export const authenticate = (req: AuthenticatedRequest, res: Response, next: Nex
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = verifyToken(token);
-    req.user = decoded;
+    const decoded = verifyToken(token) as any;
+    req.user = decoded; // Attaches authenticated user payload, which contains id
     next();
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Invalid token';
-    res.status(401).json({ error: `Unauthorized: ${message}` });
+  } catch (error: any) {
+    const status = error.status || 401;
+    const message = error.message || 'Invalid token';
+    res.status(status).json({ error: message });
     return;
   }
 };
