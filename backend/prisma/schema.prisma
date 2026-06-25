@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum AssetType {
+  NETWORK
+  WEB_APPLICATION
+  CLOUD_ACCOUNT
+  ENDPOINT
+  API
+}
+
+enum AssetStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+enum Severity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum VulnerabilityStatus {
+  OPEN
+  CONFIRMED
+  MITIGATED
+  FALSE_POSITIVE
+  ACCEPTED_RISK
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  CONTAINED
+  RESOLVED
+  CLOSED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  SCAN_STARTED
+  SCAN_COMPLETED
+  INCIDENT_CREATED
+  INCIDENT_UPDATED
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String
+  role      UserRole @default(ANALYST)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assets    Asset[]
+  incidents Incident[]
+  auditLogs AuditLog[]
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Asset {
+  id          String      @id @default(uuid()) @db.Uuid
+  ownerId     String      @db.Uuid
+  name        String
+  type        AssetType
+  status      AssetStatus @default(ACTIVE)
+  description String?
+  identifier  String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  scans     Scan[]
+  hosts     Host[]
+  incidents Incident[]
+
+  @@unique([ownerId, identifier])
+  @@index([ownerId])
+  @@index([type])
+  @@index([status])
+  @@map("assets")
+}
+
+model Scan {
+  id          String     @id @default(uuid()) @db.Uuid
+  assetId     String     @db.Uuid
+  status      ScanStatus @default(QUEUED)
+  startedAt   DateTime?
+  completedAt DateTime?
+  errorMessage String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  hosts Host[]
+
+  @@index([assetId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("scans")
+}
+
+model Host {
+  id        String   @id @default(uuid()) @db.Uuid
+  assetId   String   @db.Uuid
+  scanId    String   @db.Uuid
+  hostname  String?
+  ipAddress String
+  os        String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  asset    Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  scan     Scan      @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  services Service[]
+
+  @@unique([scanId, ipAddress])
+  @@index([assetId])
+  @@index([scanId])
+  @@index([ipAddress])
+  @@map("hosts")
+}
+
+model Service {
+  id        String   @id @default(uuid()) @db.Uuid
+  hostId    String   @db.Uuid
+  port      Int
+  protocol  String
+  name      String
+  product   String?
+  version   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  host            Host            @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  vulnerabilities Vulnerability[]
+
+  @@unique([hostId, port, protocol])
+  @@index([hostId])
+  @@index([name])
+  @@map("services")
+}
+
+model Vulnerability {
+  id          String              @id @default(uuid()) @db.Uuid
+  serviceId   String              @db.Uuid
+  title       String
+  description String
+  severity    Severity
+  status      VulnerabilityStatus @default(OPEN)
+  cveId       String?
+  cvssScore   Decimal?            @db.Decimal(3, 1)
+  remediation String?
+  detectedAt  DateTime            @default(now())
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  service   Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  incidents Incident[]
+
+  @@index([serviceId])
+  @@index([severity])
+  @@index([status])
+  @@index([cveId])
+  @@map("vulnerabilities")
+}
+
+model Incident {
+  id              String         @id @default(uuid()) @db.Uuid
+  createdById     String         @db.Uuid
+  assetId         String?        @db.Uuid
+  vulnerabilityId String?        @db.Uuid
+  title           String
+  description     String
+  severity        Severity
+  status          IncidentStatus @default(OPEN)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  resolvedAt      DateTime?
+
+  createdBy     User           @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  asset         Asset?         @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  vulnerability Vulnerability? @relation(fields: [vulnerabilityId], references: [id], onDelete: SetNull)
+
+  @@index([createdById])
+  @@index([assetId])
+  @@index([vulnerabilityId])
+  @@index([severity])
+  @@index([status])
+  @@map("incidents")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String      @db.Uuid
+  action     AuditAction
+  entityType String
+  entityId   String?     @db.Uuid
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
