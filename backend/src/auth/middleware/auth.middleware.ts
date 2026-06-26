@@ -6,14 +6,19 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export const authenticate = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  let token = '';
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.query && req.query.token) {
+    token = req.query.token as string;
+  }
+
+  if (!token) {
     res.status(401).json({ error: 'Unauthorized: No token provided' });
     return;
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = verifyToken(token) as any;

@@ -14,6 +14,12 @@ import PortDetailsPage from '../pages/dashboard/PortDetailsPage';
 import AssetPortsPage from '../pages/dashboard/AssetPortsPage';
 import VulnerabilitiesPage from '../pages/vulnerabilities/VulnerabilitiesPage';
 import VulnerabilityDetailsPage from '../pages/vulnerabilities/VulnerabilityDetailsPage';
+import AIAgentPage from '../pages/ai/AIAgentPage';
+import ExecutiveReportPage from '../pages/ai/ExecutiveReportPage';
+import SecurityGraphsPage from '../pages/ai/SecurityGraphsPage';
+import MitrePatchPage from '../pages/ai/MitrePatchPage';
+import IncidentResponsePage from '../pages/ai/IncidentResponsePage';
+import ChatPage from '../pages/ai/ChatPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 // A component that handles redirecting the root path '/' based on authentication state
@@ -62,6 +68,12 @@ export const AppRoutes: React.FC = () => {
         <Route path="assets/:id/ports" element={<AssetPortsPage />} />
         <Route path="vulnerabilities" element={<VulnerabilitiesPage />} />
         <Route path="vulnerabilities/:id" element={<VulnerabilityDetailsPage />} />
+        <Route path="ai" element={<AIAgentPage />} />
+        <Route path="report" element={<ExecutiveReportPage />} />
+        <Route path="graphs" element={<SecurityGraphsPage />} />
+        <Route path="mitre" element={<MitrePatchPage />} />
+        <Route path="incidents" element={<IncidentResponsePage />} />
+        <Route path="chat" element={<ChatPage />} />
       </Route>
 
       {/* 404 Catch All */}
