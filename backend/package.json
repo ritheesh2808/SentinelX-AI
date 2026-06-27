@@ -10,7 +10,8 @@
     "migrate:prod": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "test": "vitest run src"
   },
   "keywords": [],
   "author": "",
@@ -40,7 +41,8 @@
     "@types/pdfkit": "^0.17.6",
     "prisma": "^7.8.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "~6.0.2"
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.9"
   },
   "allowScripts": {
     "@google/genai@2.10.0": true,

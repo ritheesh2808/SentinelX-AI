@@ -55,7 +55,7 @@ export const DashboardLayout: React.FC = () => {
 
     const token = localStorage.getItem('token');
     const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-    const sseUrl = `${apiBase}/ai/soc-events?token=${token}`;
+    const sseUrl = `${apiBase}/api/v1/ai/soc-events?token=${token}`;
 
     const eventSource = new EventSource(sseUrl);
 

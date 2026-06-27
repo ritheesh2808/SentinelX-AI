@@ -84,12 +84,12 @@ app.get('/', (_req, res) => {
 })
 
 // --- Application Routes ---
-app.use('/auth', authLimiter, authRoutes)
-app.use('/assets', assetRoutes)
-app.use('/scans', scanRoutes)
-app.use('/ports', portRoutes)
-app.use('/vulnerabilities', vulnerabilityRoutes)
-app.use('/ai', aiRoutes)
+app.use('/api/v1/auth', authLimiter, authRoutes)
+app.use('/api/v1/assets', assetRoutes)
+app.use('/api/v1/scans', scanRoutes)
+app.use('/api/v1/ports', portRoutes)
+app.use('/api/v1/vulnerabilities', vulnerabilityRoutes)
+app.use('/api/v1/ai', aiRoutes)
 
 // --- 404 Handler ---
 app.use((_req, res) => {

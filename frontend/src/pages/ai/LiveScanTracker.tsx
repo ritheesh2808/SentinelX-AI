@@ -41,18 +41,18 @@ export const LiveScanTracker: React.FC<LiveScanTrackerProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md shadow-slate-950/50">
-      <h3 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
+    <div className="bg-[#131c2e] border border-[#1e293b] rounded-2xl p-6 shadow-xl">
+      <h3 className="text-base font-semibold text-[#f8fafc] mb-2 flex items-center gap-2">
         <span>🌐</span> Live Vulnerability Scanner
       </h3>
-      <p className="text-xs text-slate-400 mb-6">
+      <p className="text-xs text-[#94a3b8] mb-6">
         Simulate a target network assessment to audit hosts, discover open ports, and generate risk vectors.
       </p>
 
       {!activeScan ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-[11px] font-medium text-[#94a3b8] uppercase tracking-wider mb-2">
               Target IP Address / Range
             </label>
             <div className="flex gap-2">
@@ -62,7 +62,7 @@ export const LiveScanTracker: React.FC<LiveScanTrackerProps> = ({
                 onChange={(e) => setTargetIp(e.target.value)}
                 placeholder="e.g. 192.168.1.100"
                 disabled={isTriggering}
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 disabled:opacity-50"
+                className="flex-1 bg-[#0b0f19] border border-[#1e293b] rounded-lg px-3 py-2 text-sm text-[#f8fafc] focus:outline-none focus:border-emerald-500/50 disabled:opacity-50"
               />
               <button
                 type="submit"
@@ -78,8 +78,8 @@ export const LiveScanTracker: React.FC<LiveScanTrackerProps> = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-400 block font-medium">Target: {activeScan.target}</span>
-              <span className="text-sm font-semibold text-white mt-1 block">
+              <span className="text-xs text-[#94a3b8] block font-medium">Target: {activeScan.target}</span>
+              <span className="text-sm font-semibold text-[#f8fafc] mt-1 block">
                 {activeScan.stage}
               </span>
             </div>
@@ -88,34 +88,33 @@ export const LiveScanTracker: React.FC<LiveScanTrackerProps> = ({
             </span>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
+          <div className="w-full bg-[#0b0f19] rounded-full h-2.5 overflow-hidden border border-[#1e293b]">
             <div
               className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500 shadow-[0_0_8px_#10b981]"
               style={{ width: `${activeScan.progress}%` }}
             />
           </div>
 
-          <p className="text-xs text-slate-400 italic">
+          <p className="text-xs text-[#94a3b8] italic">
             {getStageMessage(activeScan.stage)}
           </p>
 
           <div className="grid grid-cols-3 gap-2 pt-2 text-center">
-            <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/30">
-              <span className="text-[10px] text-slate-500 block uppercase font-medium">Hosts</span>
-              <span className="text-sm font-bold text-white mt-0.5 block">
+            <div className="bg-[#0b0f19] p-2 rounded-lg border border-[#1e293b]">
+              <span className="text-[10px] text-[#475569] block uppercase font-medium">Hosts</span>
+              <span className="text-sm font-bold text-[#f8fafc] mt-0.5 block">
                 {activeScan.progress >= 30 ? '1' : '0'}
               </span>
             </div>
-            <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/30">
-              <span className="text-[10px] text-slate-500 block uppercase font-medium">Ports</span>
-              <span className="text-sm font-bold text-white mt-0.5 block">
+            <div className="bg-[#0b0f19] p-2 rounded-lg border border-[#1e293b]">
+              <span className="text-[10px] text-[#475569] block uppercase font-medium">Ports</span>
+              <span className="text-sm font-bold text-[#f8fafc] mt-0.5 block">
                 {activeScan.progress >= 50 ? '2' : '0'}
               </span>
             </div>
-            <div className="bg-slate-950/50 p-2 rounded-lg border border-slate-800/30">
-              <span className="text-[10px] text-slate-500 block uppercase font-medium">CVEs</span>
-              <span className="text-sm font-bold text-white mt-0.5 block">
+            <div className="bg-[#0b0f19] p-2 rounded-lg border border-[#1e293b]">
+              <span className="text-[10px] text-[#475569] block uppercase font-medium">CVEs</span>
+              <span className="text-sm font-bold text-[#f8fafc] mt-0.5 block">
                 {activeScan.progress >= 85 ? '1' : '0'}
               </span>
             </div>

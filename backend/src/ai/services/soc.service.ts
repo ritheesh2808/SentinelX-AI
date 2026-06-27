@@ -1,8 +1,29 @@
 import { GeminiProvider } from '../providers/gemini.provider';
 import * as aiRepository from '../repositories/ai.repository';
 
-// SOC analysis in-memory cache
-const socAnalysisCache = new Map<string, { stats: any; data: any }>();
+const CACHE_TTL_MS = 15 * 60 * 1000;
+
+interface TimedCacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
+const getValidCacheEntry = <T>(cache: Map<string, TimedCacheEntry<T>>, key: string): T | null => {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.value;
+};
+
+const setCacheEntry = <T>(cache: Map<string, TimedCacheEntry<T>>, key: string, value: T): void => {
+  cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+};
+
+// SOC analysis in-memory cache with TTL support
+const socAnalysisCache = new Map<string, TimedCacheEntry<{ stats: any; data: any }>>();
 
 export class SocService {
   private readonly gemini = new GeminiProvider();
@@ -63,7 +84,7 @@ export class SocService {
     };
 
     // Check Cache
-    const cached = socAnalysisCache.get(ownerId);
+    const cached = getValidCacheEntry(socAnalysisCache, ownerId);
     if (cached && JSON.stringify(cached.stats) === JSON.stringify(stats)) {
       console.log(`[SOC Cache] Returning cached SOC Analysis for owner: ${ownerId}`);
       return cached.data;
@@ -281,7 +302,7 @@ Your response MUST be a valid JSON object matching the requested schema. Do not 
     };
 
     // Cache the result
-    socAnalysisCache.set(ownerId, { stats, data: fullResult });
+    setCacheEntry(socAnalysisCache, ownerId, { stats, data: fullResult });
 
     return fullResult;
   }

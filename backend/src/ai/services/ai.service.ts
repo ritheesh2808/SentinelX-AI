@@ -4,10 +4,31 @@ import { AIVulnerabilityAnalysis } from '../interfaces/ai-analysis.interface';
 import { getVulnerabilityAnalysisPrompt } from '../prompts/vulnerability-analysis.prompt';
 import * as aiRepository from '../repositories/ai.repository';
 
+const CACHE_TTL_MS = 15 * 60 * 1000;
+
+interface TimedCacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
+const getValidCacheEntry = <T>(cache: Map<string, TimedCacheEntry<T>>, key: string): T | null => {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.value;
+};
+
+const setCacheEntry = <T>(cache: Map<string, TimedCacheEntry<T>>, key: string, value: T): void => {
+  cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+};
+
 // Session structure in memory for Chat Context
-const chatSessions = new Map<string, any>();
+const chatSessions = new Map<string, TimedCacheEntry<any>>();
 // Executive Report caching mechanism to prevent excessive rate-limiting/high-demand errors
-const reportCache = new Map<string, { stats: any; data: any }>();
+const reportCache = new Map<string, TimedCacheEntry<{ stats: any; data: any }>>();
 
 export class AIService {
   private readonly gemini = new GeminiProvider();
@@ -114,7 +135,7 @@ export class AIService {
       lowVulnerabilities: low,
     };
 
-    const cached = reportCache.get(ownerId);
+    const cached = getValidCacheEntry(reportCache, ownerId);
     if (cached && JSON.stringify(cached.stats) === JSON.stringify(stats)) {
       console.log(`[AI Cache] Returning cached Executive AI report for owner: ${ownerId}`);
       return cached.data;
@@ -221,14 +242,14 @@ Your response MUST be a valid JSON object matching the requested schema. Do not 
       report,
     };
 
-    reportCache.set(ownerId, { stats, data: reportData });
+    setCacheEntry(reportCache, ownerId, { stats, data: reportData });
 
     return reportData;
   }
 
   // --- SPRINT 12: SOC Chatbot with memory ---
   async sendChatMessage(ownerId: string, message: string): Promise<{ reply: string; history: any[] }> {
-    let session = chatSessions.get(ownerId);
+    let session = getValidCacheEntry(chatSessions, ownerId);
     if (!session) {
       // Fetch organizational security context
       const assets = await aiRepository.getUserSecurityContext(ownerId);
@@ -278,7 +299,7 @@ Keep explanations technical yet accessible, concise, and structured.`
       });
 
       session = chat;
-      chatSessions.set(ownerId, session);
+      setCacheEntry(chatSessions, ownerId, session);
     }
 
     const response = await session.sendMessage({ message });

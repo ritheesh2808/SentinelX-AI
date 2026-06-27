@@ -159,9 +159,12 @@ export const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-4 text-center">
-          <Link to="/forgot-password" className="text-xs text-[#6366f1] hover:text-[#818cf8] transition-colors">
+        <div className="mt-4 flex items-center justify-between text-xs">
+          <Link to="/forgot-password" className="text-[#6366f1] hover:text-[#818cf8] transition-colors">
             Forgot password?
+          </Link>
+          <Link to="/register" className="text-[#6366f1] hover:text-[#818cf8] transition-colors">
+            Create Account
           </Link>
         </div>
 

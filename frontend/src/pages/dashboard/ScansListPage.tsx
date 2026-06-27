@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import * as scanService from '../../services/scanService';
 import { useAuth } from '../../hooks/useAuth';
+import { LiveScanTracker } from '../ai/LiveScanTracker';
 import type { Scan } from '../../types/scan';
+
+interface DashboardOutletContext {
+  activeScan: { progress: number; stage: string; target: string } | null;
+  handleTriggerScan: (target: string) => Promise<void>;
+  isTriggeringScan: boolean;
+}
 
 export const ScansListPage: React.FC = () => {
   const { user } = useAuth();
+  const { activeScan, handleTriggerScan, isTriggeringScan } =
+    useOutletContext<DashboardOutletContext>();
   
   const [scans, setScans] = useState<Scan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +88,12 @@ export const ScansListPage: React.FC = () => {
           {errorMsg}
         </div>
       )}
+
+      <LiveScanTracker
+        activeScan={activeScan}
+        onTriggerScan={handleTriggerScan}
+        isTriggering={isTriggeringScan}
+      />
 
       {/* Scans Table */}
       <div className="bg-[#131c2e] border border-[#1e293b] rounded-2xl overflow-hidden shadow-xl">

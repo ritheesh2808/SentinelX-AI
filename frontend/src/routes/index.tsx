@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import ProtectedRoute from '../components/layout/ProtectedRoute';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LoginPage from '../pages/auth/LoginPage';
+import { RegisterPage } from '../pages/auth/RegisterPage';
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import DashboardHome from '../pages/dashboard/DashboardHome';
@@ -51,6 +52,7 @@ export const AppRoutes: React.FC = () => {
 
       {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
