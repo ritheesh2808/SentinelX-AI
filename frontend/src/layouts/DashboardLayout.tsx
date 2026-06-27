@@ -143,7 +143,7 @@ export const DashboardLayout: React.FC = () => {
     }
   };
 
-  const navigationItems = [
+  const navigationItems: Array<{ name: string; path: string; icon: React.ReactNode; exact?: boolean; disabled?: boolean }> = [
     {
       name: 'Overview',
       path: '/dashboard',
@@ -253,7 +253,6 @@ export const DashboardLayout: React.FC = () => {
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       ),
-      disabled: true,
     },
   ];
 

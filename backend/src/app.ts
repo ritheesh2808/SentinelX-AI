@@ -20,10 +20,14 @@ app.use(helmet({
   contentSecurityPolicy: false, // Handled by Vercel for frontend
 }))
 
-// --- CORS: locked to FRONTEND_URL in production ---
-const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL]
-  : ['http://localhost:5173', 'http://localhost:3000']
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://sentinelx-ai-8rnk.onrender.com',
+]
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL)
+}
 
 app.use(cors({
   origin: (origin, callback) => {

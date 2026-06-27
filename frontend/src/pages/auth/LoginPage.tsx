@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../services/api';
 
@@ -158,6 +158,12 @@ export const LoginPage: React.FC = () => {
             )}
           </button>
         </form>
+
+        <div className="mt-4 text-center">
+          <Link to="/forgot-password" className="text-xs text-[#6366f1] hover:text-[#818cf8] transition-colors">
+            Forgot password?
+          </Link>
+        </div>
 
         <div className="mt-8 border-t border-[#1e293b] pt-6 text-center">
           <p className="text-xs text-[#475569]">

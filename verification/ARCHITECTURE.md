@@ -19,15 +19,15 @@ SentinelX-AI/
 │       ├── scans/                  # XML parser and Scan registries
 │       ├── ports/                  # Opened Port and risk definitions
 │       ├── vulnerabilities/        # Vulnerability registers
-│       └── ai/                     # AI Engine
+│       └── ai/                     # AI Engine & Real-Time Event System
 │           ├── controllers/        # AI endpoint handlers
 │           ├── repositories/       # Context aggregation repositories
 │           ├── routes/             # Path routing declarations
-│           └── services/           # Gemini client integrations and PDF generation
+│           └── services/           # Gemini client, SSE channels, IncidentEngine, and PDF builders
 └── frontend/
     └── src/
         ├── layouts/
-        │   └── DashboardLayout.tsx # Sidebar layout configuration
+        │   └── DashboardLayout.tsx # Sidebar layout configuration & SSE subscription
         ├── services/
         │   ├── api.ts              # Global Axios base setup
         │   └── aiService.ts        # AI API binding methods
@@ -48,39 +48,22 @@ SentinelX-AI/
 
 ## 2. Technical System Architecture
 
-```mermaid
-graph TD
-  subgraph Frontend [React Web Application]
-    UI[Web UI Screens] --> Layout[DashboardLayout & Sidebar]
-    Layout --> Pages[SOC / Executive Pages]
-    Pages --> Service[aiService.ts Axios Client]
-  end
+SentinelX AI incorporates a modern layered architecture structured with clear separation of concerns:
 
-  subgraph Backend [Express API Server]
-    Service --> Router[ai.routes.ts]
-    Router --> Auth[auth.middleware.ts JWT check]
-    Auth --> Ctrl[ai.controller.ts]
-    
-    Ctrl --> SocServ[soc.service.ts Correlation Engine]
-    Ctrl --> PDF[pdf-soc.service.ts PDF Builder]
-    
-    SocServ --> Cache[(In-Memory Caching)]
-    SocServ --> Repos[ai.repository.ts DB Queries]
-    
-    Cache -- Cache Miss --> Gemini[Gemini API Client]
-    Gemini --> GeminiModel["gemini-2.5-flash"]
-  end
-
-  subgraph Persistence [Database Layer]
-    Repos --> Prisma[Prisma Client ORM]
-    Prisma --> PG[(PostgreSQL Database)]
-  end
-```
+1. **Frontend Presentation:** React SPA using Tailwind CSS v4. Page routing maps path contexts into view dashboards. Layouts manage real-time feeds using standard HTML5 `EventSource` listening.
+2. **REST API Interface:** Express router intercepts HTTP endpoints, validates JWT authorization tokens, and redirects targets to the controller layer.
+3. **Controller Layer:** Express controllers read query parameters, pass IDs to underlying services, and format JSON/PDF binary responses.
+4. **Service Layer:** Service classes isolate business workflows. E.g., `SocService` handles attack-surface profiling, `ScanSimulationService` drives mock scan state loops, and `IncidentEngineService` evaluates vulnerabilities for automated critical incident escalations.
+5. **Repository Layer:** Abstract database query operations from business logic. Direct database queries leverage the Prisma ORM.
 
 ---
 
-## 3. Core Structural Patterns
-1. **Repository Pattern:** Separates db operations from business services. `ai.repository.ts` collects user statistics across hosts, ports, vulnerabilities, and scans safely.
-2. **Controller-Service Layer Separation:** Routes bind strictly to Controller actions. Controllers parse Express request scopes and pass IDs to services. Business logic, prompt engineering, and PDF compilation are cleanly isolated in Service objects.
-3. **Caching Layer:** Due to severe rate limiting on the Google Gemini API (returning 503 Service Unavailable), the `SocService` incorporates stats-based signature caching. If assets/vulnerability states do not change, consecutive requests retrieve responses in milliseconds without querying Gemini.
-4. **Custom Visualization Engine:** Avoids dependency-hell with React 19 by constructing custom SVG rendering engines for graphs and dashboards.
+## 3. Core Architectural Patterns
+
+* **Repository Pattern:** Separates database interactions from business services. `ai.repository.ts` consolidates user context statistics across hosts, ports, vulnerabilities, and scans safely.
+* **Controller-Service Separation:** Business rules, prompt templates, and PDF compilation are cleanly isolated in Service modules rather than being mixed inside router paths or controllers.
+* **Real-Time Event Architecture (EventBus & SSE):**
+  - **`event-bus.service.ts`:** An in-memory observer pattern EventBus allowing services to publish system events (e.g. `scan:progress`, `vulnerability:discovered`, `incident:created`).
+  - **SSE Controller Route (`/ai/soc-events`):** Subscribes HTTP socket lines to the EventBus, piping structured text event streams directly to the frontend client to update state graphs and display toasted notifications without polling.
+* **In-Memory Caching:** Due to rate limiting on the Gemini API, `SocService` incorporates stats-based signature caching. If assets/vulnerability states do not change, consecutive requests retrieve responses in milliseconds without querying Gemini.
+* **Custom SVG Visualizer:** Bypasses third-party charting conflicts in React 19 by dynamically rendering network graphs, attack paths, and trend indicators as native SVG paths.

@@ -4,6 +4,8 @@ import { useAuth } from '../hooks/useAuth';
 import ProtectedRoute from '../components/layout/ProtectedRoute';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LoginPage from '../pages/auth/LoginPage';
+import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import DashboardHome from '../pages/dashboard/DashboardHome';
 import AssetsPage from '../pages/dashboard/AssetsPage';
 import ScansListPage from '../pages/dashboard/ScansListPage';
@@ -12,6 +14,7 @@ import ScanDetailsPage from '../pages/dashboard/ScanDetailsPage';
 import PortsPage from '../pages/dashboard/PortsPage';
 import PortDetailsPage from '../pages/dashboard/PortDetailsPage';
 import AssetPortsPage from '../pages/dashboard/AssetPortsPage';
+import { ProfileSettingsPage } from '../pages/dashboard/ProfileSettingsPage';
 import VulnerabilitiesPage from '../pages/vulnerabilities/VulnerabilitiesPage';
 import VulnerabilityDetailsPage from '../pages/vulnerabilities/VulnerabilityDetailsPage';
 import AIAgentPage from '../pages/ai/AIAgentPage';
@@ -48,6 +51,8 @@ export const AppRoutes: React.FC = () => {
 
       {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Protected Dashboard Routes */}
       <Route
@@ -74,6 +79,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="mitre" element={<MitrePatchPage />} />
         <Route path="incidents" element={<IncidentResponsePage />} />
         <Route path="chat" element={<ChatPage />} />
+        <Route path="settings" element={<ProfileSettingsPage />} />
       </Route>
 
       {/* 404 Catch All */}
