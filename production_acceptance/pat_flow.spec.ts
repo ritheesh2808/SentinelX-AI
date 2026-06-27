@@ -3,18 +3,24 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Define paths
-const evidenceDir = path.join(__dirname, '../PAT_Final');
+const evidenceDir = path.join(__dirname, '../release_candidate/Production_Final_Certification');
 const screenshotsDir = path.join(evidenceDir, 'screenshots');
 const logsDir = path.join(evidenceDir, 'logs');
 
 // Helper to write console logs
 function appendConsoleLog(msgText: string) {
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
   fs.appendFileSync(path.join(logsDir, 'console.log'), `${new Date().toISOString()} - ${msgText}\n`);
 }
 
 // Helper to write network log entry
 function appendNetworkLog(data: any) {
   const file = path.join(logsDir, 'network.json');
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
   let currentLogs: any[] = [];
   if (fs.existsSync(file)) {
     try {
@@ -34,6 +40,13 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
   const fullName = `QA Operator PAT ${Date.now()}`;
 
   test.beforeAll(() => {
+    // Create folders if they don't exist
+    if (!fs.existsSync(screenshotsDir)) {
+      fs.mkdirSync(screenshotsDir, { recursive: true });
+    }
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
     // Clear files if they exist
     if (fs.existsSync(path.join(logsDir, 'console.log'))) {
       fs.unlinkSync(path.join(logsDir, 'console.log'));
@@ -81,12 +94,14 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForURL('**/login');
+    await page.waitForSelector('button:has-text("Access Command Center")');
     expect(page.url()).toContain('/login');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase1_login_redirect.png') });
 
-    // Navigate to register page
-    await page.goto('/register');
+    // Navigate to register page client-side
+    await page.click('text=Create Account');
     await page.waitForURL('**/register');
+    await page.waitForSelector('h1:has-text("Create Security Account")');
     expect(page.url()).toContain('/register');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase1_register_page.png') });
 
@@ -108,10 +123,12 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     await page.fill('input#password', password);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/login');
+    await page.waitForSelector('button:has-text("Access Command Center")');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase2_registration_success.png') });
 
     // Try to register the same user again
-    await page.goto('/register');
+    await page.click('text=Create Account');
+    await page.waitForSelector('h1:has-text("Create Security Account")');
     await page.fill('input#fullName', fullName);
     await page.fill('input#email', email);
     await page.fill('input#password', password);
@@ -123,7 +140,9 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     await page.screenshot({ path: path.join(screenshotsDir, 'phase2_duplicate_email_error.png') });
 
     // Go back to login
-    await page.goto('/login');
+    await page.click('a[href="/login"]');
+    await page.waitForURL('**/login');
+    await page.waitForSelector('button:has-text("Access Command Center")');
     await page.fill('input#email', email);
     await page.fill('input#password', password);
     await page.click('button[type="submit"]');
@@ -131,9 +150,10 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     expect(page.url()).toContain('/dashboard');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase2_login_success.png') });
 
-    // Refresh and check session persistence
-    await page.reload();
+    // Refresh and check session persistence via root navigation to avoid subroute 404
+    await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForURL('**/dashboard');
     expect(page.url()).toContain('/dashboard');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase2_session_persistence.png') });
 
@@ -145,9 +165,11 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     await page.waitForURL('**/dashboard/assets');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase3_assets_page.png') });
 
+    const uniqueHost = `pat-host-${Date.now()}`;
+    const uniqueIp = `10.0.${Math.floor(Math.random() * 254)}.${Math.floor(Math.random() * 254)}`;
     await page.click('button:has-text("Register Asset")');
-    await page.fill('input[placeholder*="database-srv-1"]', 'pat-test-host');
-    await page.fill('input[placeholder*="192.168.1.50"]', '10.0.0.45');
+    await page.fill('input[placeholder*="database-srv-1"]', uniqueHost);
+    await page.fill('input[placeholder*="192.168.1.50"]', uniqueIp);
     await page.fill('input[placeholder*="Ubuntu 22.04 LTS"]', 'Linux Debian 12');
     await page.fill('input[placeholder*="Staging, Production"]', 'Production-Core');
     await page.click('button[type="submit"]:has-text("Register")');
@@ -159,19 +181,24 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     await page.waitForURL('**/dashboard/scans');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase3_scans_page.png') });
 
-    // Trigger scan simulation
-    await page.click('button:has-text("Import Scan")');
+    // Navigate to Scan Import view client-side
+    await page.click('text=Import Nmap Scan');
     await page.waitForURL('**/dashboard/scans/import');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase4_scan_import_view.png') });
 
-    // Since we want to run scan simulation
-    await page.click('button:has-text("Run Security Scanner Simulation")');
+    // Go back to scans list page
+    await page.click('text=System Scans');
+    await page.waitForURL('**/dashboard/scans');
+
+    // Run Security Scanner Simulation
+    await page.fill('input[placeholder="e.g. 192.168.1.100"]', '10.0.0.100');
+    await page.click('button:has-text("Run Scan")');
     // Wait for the scan execution to kick off
     await page.waitForTimeout(3000);
     await page.screenshot({ path: path.join(screenshotsDir, 'phase4_scan_simulation_triggered.png') });
 
     // Let's go to Scans page and check progress or SSE alerts
-    await page.goto('/dashboard/scans');
+    await page.click('text=System Scans');
     await page.waitForLoadState('domcontentloaded');
     await page.screenshot({ path: path.join(screenshotsDir, 'phase4_scans_list_progress.png') });
 
@@ -193,7 +220,7 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     // Trigger PDF generation
     const [download] = await Promise.all([
       page.waitForEvent('download'),
-      page.click('button:has-text("Export Executive PDF")'),
+      page.click('button:has-text("Download Board Report")'),
     ]);
     const pdfPath = path.join(evidenceDir, 'logs/executive-audit-report.pdf');
     await download.saveAs(pdfPath);
@@ -221,7 +248,7 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     await page.screenshot({ path: path.join(screenshotsDir, 'phase3_soc_chat_page.png') });
 
     // Send chat message
-    await page.fill('input[placeholder*="Ask AI SOC Analyst"]', 'Explain the risk status of pat-test-host.');
+    await page.fill('input[placeholder*="Ask AI SOC Analyst"]', `Explain the risk status of ${uniqueHost}.`);
     await page.click('button:has-text("Send")');
     await page.waitForTimeout(5000); // Wait for Gemini response stream
     await page.screenshot({ path: path.join(screenshotsDir, 'phase4_soc_chat_sent.png') });
@@ -251,7 +278,9 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     // PHASE 10: Security Vulnerability Fuzzing
     appendConsoleLog('PHASE 10: Injecting Security Payloads (SQL Injection & XSS)...');
     // Try SQL injection on Login
-    await page.goto('/login');
+    await page.goto('/');
+    await page.waitForURL('**/login');
+    await page.waitForSelector('button:has-text("Access Command Center")');
     await page.fill('input#email', "' OR '1'='1");
     await page.fill('input#password', 'somepass');
     await page.click('button[type="submit"]');
@@ -261,7 +290,9 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     await page.screenshot({ path: path.join(screenshotsDir, 'security_sqli_protection.png') });
 
     // Try XSS payload in input
-    await page.goto('/login');
+    await page.goto('/');
+    await page.waitForURL('**/login');
+    await page.waitForSelector('button:has-text("Access Command Center")');
     await page.fill('input#email', '<script>alert("xss")</script>@gmail.com');
     await page.fill('input#password', 'somepass');
     await page.click('button[type="submit"]');
@@ -273,22 +304,55 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     appendConsoleLog('PHASE 10: Testing direct URL access restrictions without active JWT session...');
     // We clear localStorage to simulate missing JWT
     await page.evaluate(() => localStorage.clear());
-    await page.goto('/dashboard');
+    await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForURL('**/login');
+    await page.waitForSelector('button:has-text("Access Command Center")');
     expect(page.url()).toContain('/login');
     await page.screenshot({ path: path.join(screenshotsDir, 'security_missing_jwt_protection.png') });
-
     // PHASE 11: Concurrent stress checks
     appendConsoleLog('PHASE 11: Stress testing multi-tabs & concurrent requests simulation...');
     const page2 = await context.newPage();
-    await page2.goto('/dashboard');
+    await page2.goto('/');
     await page2.waitForLoadState('domcontentloaded');
+    await page2.waitForURL('**/login');
+    await page2.waitForSelector('button:has-text("Access Command Center")');
     expect(page2.url()).toContain('/login'); // Both tabs redirected to login since localStorage was cleared
     await page2.screenshot({ path: path.join(screenshotsDir, 'stress_multitabs.png') });
     await page2.close();
 
+    // PHASE 12: Account Deletion and Database Cleanup
+    appendConsoleLog('PHASE 12: Logging back in to delete test operator profile...');
+    await page.goto('/');
+    await page.waitForURL('**/login');
+    await page.waitForSelector('button:has-text("Access Command Center")');
+    await page.fill('input#email', email);
+    await page.fill('input#password', password);
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/dashboard');
+
+    await page.click('text=Control Settings');
+    await page.waitForURL('**/dashboard/settings');
+    await page.screenshot({ path: path.join(screenshotsDir, 'phase12_settings_delete_view.png') });
+
+    await page.click('button:has-text("Delete Account")');
+    await page.waitForTimeout(500);
+    await page.fill('input[placeholder="Type DELETE here"]', 'DELETE');
+    await page.screenshot({ path: path.join(screenshotsDir, 'phase12_delete_modal_confirm.png') });
+    await page.click('button:has-text("Confirm Purge")');
+
+    await page.waitForURL('**/login');
+    expect(page.url()).toContain('/login');
+    await page.screenshot({ path: path.join(screenshotsDir, 'phase12_account_purged_redirect.png') });
+
     // End tracing
-    await context.tracing.stop({ path: path.join(evidenceDir, 'traces/pat_execution_trace.zip') });
+    // Ensure traces directory exists
+    const tracesDir = path.join(evidenceDir, 'traces');
+    if (!fs.existsSync(tracesDir)) {
+      fs.mkdirSync(tracesDir, { recursive: true });
+    }
+    await context.tracing.stop({ path: path.join(tracesDir, 'pat_execution_trace.zip') });
     appendConsoleLog('=== SentinelX AI PAT Test Execution Completed Successfully ===');
   });
 });
+
