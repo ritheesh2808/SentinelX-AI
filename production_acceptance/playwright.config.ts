@@ -10,7 +10,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 1,
   workers: 1,
-  reporter: [['html', { open: 'never', outputFolder: '../release_candidate/Production_Final_Certification/playwright-report' }]],
+  reporter: [['html', { open: 'never', outputFolder: '../release_candidate/Production_Validation/playwright-report' }]],
   use: {
     baseURL: process.env.BASE_URL || 'https://sentinelx-ai-8rnk.onrender.com',
     trace: 'off',
@@ -18,7 +18,7 @@ export default defineConfig({
     screenshot: 'on',
     ignoreHTTPSErrors: true,
     har: {
-      path: '../release_candidate/Production_Final_Certification/har/traffic.har',
+      path: '../release_candidate/Production_Validation/har/traffic.har',
       updateContent: 'embed',
     },
   },

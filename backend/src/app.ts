@@ -52,10 +52,10 @@ const globalLimiter = rateLimit({
   message: { error: 'Too many requests. Please try again later.' },
 })
 
-// --- Auth Rate Limiter: 15 req/15min per IP (brute-force protection) ---
+// --- Auth Rate Limiter: 100 req/15min per IP (brute-force protection) ---
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many authentication attempts. Please wait before trying again.' },

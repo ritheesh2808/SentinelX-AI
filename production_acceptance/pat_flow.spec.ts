@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Define paths
-const evidenceDir = path.join(__dirname, '../release_candidate/Production_Final_Certification');
+const evidenceDir = path.join(__dirname, '../release_candidate/Production_Validation');
 const screenshotsDir = path.join(evidenceDir, 'screenshots');
 const logsDir = path.join(evidenceDir, 'logs');
 
@@ -248,8 +248,8 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
     await page.screenshot({ path: path.join(screenshotsDir, 'phase3_soc_chat_page.png') });
 
     // Send chat message
-    await page.fill('input[placeholder*="Ask AI SOC Analyst"]', `Explain the risk status of ${uniqueHost}.`);
-    await page.click('button:has-text("Send")');
+    await page.fill('input[placeholder*="Ask a question about your security risks"]', `Explain the risk status of ${uniqueHost}.`);
+    await page.click('form button[type="submit"]');
     await page.waitForTimeout(5000); // Wait for Gemini response stream
     await page.screenshot({ path: path.join(screenshotsDir, 'phase4_soc_chat_sent.png') });
 
@@ -277,6 +277,7 @@ test.describe('SentinelX AI Production Acceptance Test (PAT)', () => {
 
     // PHASE 10: Security Vulnerability Fuzzing
     appendConsoleLog('PHASE 10: Injecting Security Payloads (SQL Injection & XSS)...');
+    await page.evaluate(() => localStorage.clear());
     // Try SQL injection on Login
     await page.goto('/');
     await page.waitForURL('**/login');
