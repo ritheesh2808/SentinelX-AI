@@ -54,3 +54,16 @@ frontend/node_modules/
 backend/dist/
 backend/build/
 backend/node_modules/
+
+# Playwright
+production_acceptance/test-results/
+production_acceptance/playwright-report/
+
+# Playwright artifacts
+*.webm
+*.har
+*.trace.zip
+
+# Temporary test outputs
+test-results/
+playwright-report/

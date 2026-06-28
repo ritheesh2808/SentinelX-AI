@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Define paths
-const evidenceDir = path.join(__dirname, '../release_candidate/Production_Validation');
+const evidenceDir = path.join(__dirname, '../release_candidate/Version_1_Final_Certification');
 const screenshotsDir = path.join(evidenceDir, 'screenshots');
 const logsDir = path.join(evidenceDir, 'logs');
 
